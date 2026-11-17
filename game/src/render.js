@@ -153,6 +153,20 @@ export function createRenderer(canvas) {
         context.lineTo(-r * 0.38, 0);
         context.closePath();
         context.fill();
+        // Four orbiting sparks make each crystal feel alive; angles are a pure function of time
+        // and index, so a given frame is byte-for-byte repeatable for the screenshot scenes.
+        for (let k = 0; k < 4; k += 1) {
+          const a = state.elapsed * 3.4 + index + (k * Math.PI) / 2;
+          const rr = r * 1.7;
+          const sx = Math.cos(a) * rr;
+          const sy = Math.sin(a) * rr * 0.7;
+          context.globalAlpha = 0.5 + 0.4 * Math.sin(a * 2);
+          context.fillStyle = k % 2 === 0 ? PALETTE.coinCore : PALETTE.accent;
+          context.beginPath();
+          context.arc(sx, sy, 2.2, 0, Math.PI * 2);
+          context.fill();
+        }
+        context.globalAlpha = 1;
         context.restore();
       } else {
         // Jagged asteroid silhouette with a hot core and rim light.

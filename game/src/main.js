@@ -6,10 +6,11 @@
 // instead of running the loop, paints it twice and sets window.__shotReady for a screenshot.
 import { BEST_KEY, LIVES, STEP } from './config.js';
 import { createRandom } from './random.js';
-import { createWorld, EVENT_HIT, EVENT_OVER } from './world.js';
+import { createWorld, EVENT_HIT, EVENT_COIN, EVENT_OVER } from './world.js';
 import { ACTION_CONFIRM, ACTION_PAUSE, createInput } from './input.js';
 import { createRenderer, SCREEN_OVER, SCREEN_PAUSED, SCREEN_PLAY, SCREEN_TITLE } from './render.js';
 import { stageShot } from './shots.js';
+import { unlock, crystal, hit, launch, gameOver } from './audio.js';
 
 /** The longest frame the loop catches up on; a longer stall (a hidden tab) is dropped, not replayed. */
 const MAX_FRAME = 0.25;
@@ -68,7 +69,9 @@ function runGame() {
     world.reset();
     accumulator = 0;
     screen = SCREEN_PLAY;
-    announce(`Playing. ${LIVES} lives.`);
+    unlock();
+    launch();
+    announce(`Playing. ${LIVES} hull points.`);
   }
 
   function endGame() {
@@ -77,6 +80,7 @@ function runGame() {
       best = world.state.score;
       saveBest(best);
     }
+    gameOver();
     announce(`Game over. Score ${world.state.score}. Best ${best}.`);
   }
 
@@ -98,8 +102,12 @@ function runGame() {
       return;
     }
     const events = world.step(STEP, input.direction(), false);
+    if (events & EVENT_COIN) crystal(world.state.combo);
+    if (events & EVENT_HIT) {
+      hit();
+      announce(world.state.lives === 1 ? 'Hit. 1 hull point left.' : `Hit. ${world.state.lives} hull points left.`);
+    }
     if (events & EVENT_OVER) endGame();
-    else if (events & EVENT_HIT) announce(world.state.lives === 1 ? 'Hit. 1 life left.' : `Hit. ${world.state.lives} lives left.`);
   }
 
   function frame(now) {
@@ -126,7 +134,7 @@ function runGame() {
     }
   });
 
-  announce('Block Dodger. Press Space or click to start.');
+  announce('Starfall Courier. Press Space or click to launch.');
   requestAnimationFrame(frame);
 }
 
